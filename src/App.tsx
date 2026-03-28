@@ -94,26 +94,32 @@ COLUMN LOCATIONS (read carefully from the spreadsheet):
 - U column: 備考 (contact info, notes)
 - AA column (last column, 当日): today's date number or "x"
 
-CLEANING RULES:
-1. AA column = today's date number (e.g. "29") → NEEDS CLEANING → INCLUDE
-2. AA column = "x" → already cleaned → EXCLUDE
-3. AA column = blank → EXCLUDE (guest is mid-stay)
+CLEANING RULES - APPLY IN THIS EXACT ORDER:
 
-T COLUMN (連泊) RULES - this modifies priority only, does NOT exclude rooms:
-- T = "S" → guest's FIRST day of continuous stay → needPR: true, set cleaningPriority to "HIGH"
-- T = "K" or "E" → mid-stay or last day → still clean if AA = today's date
-- T = blank → normal checkout/checkin
+STEP 1 - Check AA column (last column, 当日):
+- AA has ANY number (e.g. "29", "28", "30") → INCLUDE for cleaning
+- AA = "x" or "X" → EXCLUDE (already cleaned)
+- AA = blank → EXCLUDE
 
-PRIORITY RULES:
-- K column has guest name AND has arrival time in N column → cleaningPriority: "HIGH", needPR: true
-- K column has guest name but NO arrival time → cleaningPriority: "MEDIUM", needPR: true
-- T column = "S" → cleaningPriority: "HIGH"
-- No guest name → cleaningPriority: "MEDIUM"
+STEP 2 - Check T column (連泊) to filter:
+- T = "K" → EXCLUDE from cleaning list
+- T = "E" → EXCLUDE from cleaning list
+- T = "S" → KEEP (first night of continuous stay)
+- T = blank or any other value → KEEP
+
+RESULT: Include rooms where AA has a number AND T is NOT "K" and NOT "E".
+
+PR AND PRIORITY RULES (for included rooms):
+- K column HAS a guest name → needPR: true, cleaningPriority: "HIGH"
+- K column has NO guest name → needPR: false, cleaningPriority: "MEDIUM" (checkout cleaning, no new guest today)
+
+ARRIVAL TIME:
+- If N column has arrival time → include in arrivalTime field
 
 OTHER RULES:
 - G column ≠ 0 → needIdCheck: true
-- N column: extract arrival time, and detect BBQ/bonfire(篝火)/pet(ペット) mentions
-- needConfirm: true only if AA is blank AND T column is also blank
+- N column: detect BBQ/bonfire(篝火)/pet(ペット) mentions
+- needConfirm: false
 
 IMPORTANT: Include ALL rooms where AA = today's date. Do not skip any room.
 
