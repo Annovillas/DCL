@@ -77,13 +77,45 @@ const t = (lang: Lang) => ({
 const SYSTEM_PROMPT = `You are an expert at reading Japanese hotel Excel spreadsheets.
 Extract cleaning tasks and return ONLY a valid JSON array. No markdown, no explanation.
 
-Rules:
-- AA column (当日): "28" or today's date = needs cleaning, "x" = already clean (exclude), blank = check T column
-- T column: if S, K, or E = guest is staying (連泊), exclude from cleaning even if AA is blank
-- K column (予約者名): if has guest name → needPR: true, cleaningPriority: "HIGH" if also has arrival time else "MEDIUM"
-- G column (証明書): if value ≠ 0 → needIdCheck: true
-- N column: arrival time, BBQ, bonfire, pet info
-- Only include rooms that need cleaning today
+COLUMN LOCATIONS (read carefully from the spreadsheet):
+- H column: Room name (ROOM)
+- I column: Room code (4-digit number)
+- J column: Platform/abdr
+- K column: Guest name (予約者名)
+- L column: Booking system
+- M column: DR status (ステータス)
+- N column: Arrival time (到着予定), may also contain BBQ/bonfire/pet info
+- O column: 室 (room count, usually 1)
+- P column: 人 (total guest count)
+- Q column: 大 (adults)
+- R column: 子 (children)
+- S column: 齢 (age info)
+- T column: 連泊 (continuous stay flag)
+- U column: 備考 (contact info, notes)
+- AA column (last column, 当日): today's date number or "x"
+
+CLEANING RULES:
+1. AA column = today's date number (e.g. "29") → NEEDS CLEANING → INCLUDE
+2. AA column = "x" → already cleaned → EXCLUDE
+3. AA column = blank → EXCLUDE (guest is mid-stay)
+
+T COLUMN (連泊) RULES - this modifies priority only, does NOT exclude rooms:
+- T = "S" → guest's FIRST day of continuous stay → needPR: true, set cleaningPriority to "HIGH"
+- T = "K" or "E" → mid-stay or last day → still clean if AA = today's date
+- T = blank → normal checkout/checkin
+
+PRIORITY RULES:
+- K column has guest name AND has arrival time in N column → cleaningPriority: "HIGH", needPR: true
+- K column has guest name but NO arrival time → cleaningPriority: "MEDIUM", needPR: true
+- T column = "S" → cleaningPriority: "HIGH"
+- No guest name → cleaningPriority: "MEDIUM"
+
+OTHER RULES:
+- G column ≠ 0 → needIdCheck: true
+- N column: extract arrival time, and detect BBQ/bonfire(篝火)/pet(ペット) mentions
+- needConfirm: true only if AA is blank AND T column is also blank
+
+IMPORTANT: Include ALL rooms where AA = today's date. Do not skip any room.
 
 Return JSON array with objects:
 {
