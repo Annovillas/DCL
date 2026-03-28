@@ -1,11 +1,27 @@
 import React, { useState, useRef } from 'react';
 import { Users, Clock, AlertCircle, FileText, Upload, Globe, Printer, Copy, Check, Loader2 } from 'lucide-react';
 
-// ============================================================
-// 型定義
-// ============================================================
 type Lang = 'ja' | 'en';
 type Priority = 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW';
+
+interface RawRow {
+  room: string;
+  roomCode: string;
+  platform: string;
+  guestName: string;
+  bookingSystem: string;
+  status: string;
+  arrivalTime: string;
+  guestCount: number;
+  aaValue: string;   // raw AA column value: "29", "x", ""
+  tValue: string;    // raw T column value: "S", "K", "E", ""
+  gValue: string;
+  contact: string;
+  notes: string;
+  bbq: boolean;
+  bonfire: boolean;
+  pet: boolean;
+}
 
 interface Task {
   room: string;
@@ -22,14 +38,93 @@ interface Task {
   contact: string;
   cleaningPriority: Priority;
   notes: string;
-  bbq?: boolean;
-  bonfire?: boolean;
-  pet?: boolean;
+  bbq: boolean;
+  bonfire: boolean;
+  pet: boolean;
 }
 
-// ============================================================
-// 翻訳
-// ============================================================
+// Convert raw rows to tasks using business logic
+const processRawData = (rows: RawRow[]): Task[] => {
+  return rows
+    .filter(row => {
+      // Step 1: AA must have a number
+      const aa = row.aaValue.trim();
+      if (!aa || aa.toLowerCase() === 'x') return false;
+      if (!/\d/.test(aa)) return false;
+
+      // Step 2: T must NOT be K or E
+      const t = row.tValue.trim().toUpperCase();
+      if (t === 'K' || t === 'E') return false;
+
+      return true;
+    })
+    .map(row => {
+      const hasGuestName = row.guestName.trim().length > 0;
+      const needPR = hasGuestName;
+      const cleaningPriority: Priority = hasGuestName ? 'HIGH' : 'MEDIUM';
+      const needIdCheck = row.gValue !== '0' && row.gValue.trim() !== '';
+
+      return {
+        room: row.room,
+        roomCode: row.roomCode,
+        platform: row.platform,
+        guestName: row.guestName,
+        bookingSystem: row.bookingSystem,
+        status: row.status,
+        arrivalTime: row.arrivalTime,
+        guestCount: row.guestCount,
+        needIdCheck,
+        needPR,
+        needConfirm: false,
+        contact: row.contact,
+        cleaningPriority,
+        notes: row.notes,
+        bbq: row.bbq,
+        bonfire: row.bonfire,
+        pet: row.pet,
+      };
+    });
+};
+
+const SYSTEM_PROMPT = `You are an expert at reading Japanese hotel Excel spreadsheets.
+Your ONLY job is to extract raw data from every room row. Do NOT filter anything. Return ALL rows.
+Output ONLY a valid JSON array, no markdown, no explanation.
+
+The spreadsheet columns (read carefully):
+- H column: Room name (ROOM) - MOKA, KOKO, MARU, RUNA, MEI, NOA, RIN, LEO, MOMO, 月江苑, Grand V, panorama, Villa A, Villa B, Villa C, cube, Villa D, Villa E, Villa F, Villa G
+- I column: Room code (4-digit number)
+- J column: Platform (Agoda, A, B-DR, etc.) or empty
+- K column: Guest name (予約者名) - may be empty
+- L column: Booking system (Stan, Edrian) or empty
+- M column: DR status text or empty
+- N column: Arrival time (like 15:00) and special notes
+- P column: Guest count (人) - a number
+- T column: 連泊 - THIS IS CRITICAL - read every row carefully - value is S, K, E, or empty
+- U column: Contact info (備考)
+- AA column: 当日 - THE LAST/RIGHTMOST COLUMN - a number like 28 or 29, or the letter x, or empty
+
+Extract these fields for EVERY room row:
+{
+  "room": string (H column),
+  "roomCode": string (I column),
+  "platform": string (J column, empty if blank),
+  "guestName": string (K column, empty string if blank),
+  "bookingSystem": string (L column),
+  "status": string (M column),
+  "arrivalTime": string (time from N column, empty if none),
+  "guestCount": number (P column),
+  "aaValue": string (AA column exact value: "29" or "x" or ""),
+  "tValue": string (T column exact value: "S" or "K" or "E" or ""),
+  "gValue": string (G column value or "0"),
+  "contact": string (U column text),
+  "notes": string (special notes from N or U),
+  "bbq": boolean,
+  "bonfire": boolean,
+  "pet": boolean
+}
+
+IMPORTANT: Return ALL rows. Every room. Do not skip any row. Do not filter.`;
+
 const t = (lang: Lang) => ({
   title:        lang === 'ja' ? '🏠 清掃タスク自動生成システム' : '🏠 Cleaning Task Generator',
   subtitle:     lang === 'ja' ? 'Excelスクショから自動生成' : 'Auto-generated from Excel screenshot',
@@ -40,7 +135,6 @@ const t = (lang: Lang) => ({
   generating:   lang === 'ja' ? 'AIが読み取り中...' : 'AI is reading...',
   totalRooms:   lang === 'ja' ? '総清掃室数' : 'Total Rooms',
   prCount:      lang === 'ja' ? '優先対応(PR)' : 'Priority (PR)',
-  confirmCount: lang === 'ja' ? '⚠️ 要確認' : '⚠️ To Confirm',
   totalGuests:  lang === 'ja' ? '総宿泊人数' : 'Total Guests',
   taskList:     lang === 'ja' ? '📝 清掃タスクリスト' : '📝 Cleaning Task List',
   simple:       lang === 'ja' ? '📝 簡易' : '📝 Simple',
@@ -55,7 +149,6 @@ const t = (lang: Lang) => ({
   status:       lang === 'ja' ? 'ステータス' : 'Status',
   contact:      lang === 'ja' ? '連絡先' : 'Contact',
   notes:        lang === 'ja' ? '備考' : 'Notes',
-  confirmMsg:   lang === 'ja' ? 'AA列が空白です。清掃要否を確認してください。' : 'AA column is blank. Please confirm if cleaning is needed.',
   idCheck:      lang === 'ja' ? '🆔 証明書確認必要' : '🆔 ID Check Required',
   pr:           lang === 'ja' ? 'PR 優先' : 'PR Priority',
   urgent:       lang === 'ja' ? '🔴 緊急' : '🔴 Urgent',
@@ -63,84 +156,20 @@ const t = (lang: Lang) => ({
   medium:       lang === 'ja' ? '🟡 中' : '🟡 Medium',
   low:          lang === 'ja' ? '🟢 低' : '🟢 Low',
   simpleTitle:  lang === 'ja' ? '簡易版タスクリスト' : 'Simple Task List',
-  legendPR:     lang === 'ja' ? 'PR = 優先清掃' : 'PR = Priority cleaning',
+  legendPR:     lang === 'ja' ? 'PR = 優先清掃（予約者名あり）' : 'PR = Priority cleaning (guest booked)',
   legendID:     lang === 'ja' ? '🆔 = 証明書確認必要' : '🆔 = ID check required',
   legendTime:   lang === 'ja' ? '[時間] = 到着予定時間' : '[time] = Expected arrival',
-  legendWarn:   lang === 'ja' ? '⚠️ = 清掃要否確認必要' : '⚠️ = Confirm if cleaning needed',
-  noGuest:      lang === 'ja' ? '客人情報なし' : 'No guest info',
+  noGuest:      lang === 'ja' ? '客人情報なし（退房後清掃）' : 'No new guest (checkout cleaning)',
   errorMsg:     lang === 'ja' ? 'エラーが発生しました。もう一度試してください。' : 'An error occurred. Please try again.',
 });
 
-// ============================================================
-// GPT-4o プロンプト
-// ============================================================
-const SYSTEM_PROMPT = `You are an expert at reading Japanese hotel Excel spreadsheets.
-Extract cleaning tasks and return ONLY a valid JSON array. No markdown, no explanation.
+const getPriorityColor = (p: Priority) => ({
+  URGENT: 'border-l-red-500 bg-red-50',
+  HIGH:   'border-l-orange-500 bg-orange-50',
+  MEDIUM: 'border-l-yellow-400 bg-yellow-50',
+  LOW:    'border-l-green-400 bg-green-50',
+}[p] || 'border-l-gray-400 bg-gray-50');
 
-COLUMN GUIDE:
-- H column: Room name (ROOM) - e.g. MOKA, KOKO, NOA, Villa A, 月江苑
-- I column: Room code (4-digit number)
-- J column: Platform (Agoda, A, B-DR, etc.)
-- K column: Guest name (予約者名)
-- L column: Booking system (Stan, Edrian, etc.)
-- M column: DR status
-- N column: Arrival time (到着予定) + special info (BBQ, 篝火, ペット)
-- P column: Total guest count (人)
-- T column: 連泊 (continuous stay flag) - look carefully, may contain S, K, or E
-- U column: Contact info (備考)
-- AA column: 当日 - the LAST column on the right, contains a number (e.g. 29) or "x" or blank
-
-STEP 1 - GO THROUGH EVERY ROW ONE BY ONE:
-For each room row, read the AA column (last column):
-- Contains a number → candidate for cleaning
-- Contains "x" or "X" → SKIP this room
-- Blank → SKIP this room
-
-STEP 2 - FOR EACH CANDIDATE, CHECK T COLUMN CAREFULLY:
-- T = "K" → REMOVE from list (guest is mid-stay)
-- T = "E" → REMOVE from list (guest is last night of stay)  
-- T = "S" → KEEP (first night of new continuous stay)
-- T = blank or anything else → KEEP
-
-STEP 3 - SET PR AND PRIORITY:
-- K column has a guest name → needPR: true, cleaningPriority: "HIGH"
-- K column is empty/blank → needPR: false, cleaningPriority: "MEDIUM"
-
-STEP 4 - OTHER FLAGS:
-- G column value is not 0 and not blank → needIdCheck: true, otherwise false
-- Extract arrival time from N column
-- Detect BBQ / 篝火(bonfire) / ペット(pet) in N or U columns
-- needConfirm: false for all
-
-IMPORTANT: 
-- Process EVERY room row in the spreadsheet. Do not skip rows.
-- Read T column very carefully for each row - it may look empty but check closely.
-- Read AA column (the rightmost column) for every row.
-
-Return JSON array with objects:
-{
-  "room": string,
-  "roomCode": string,
-  "platform": string,
-  "guestName": string,
-  "bookingSystem": string,
-  "status": string,
-  "arrivalTime": string,
-  "guestCount": number,
-  "needIdCheck": boolean,
-  "needPR": boolean,
-  "needConfirm": boolean,
-  "contact": string,
-  "cleaningPriority": "URGENT"|"HIGH"|"MEDIUM"|"LOW",
-  "notes": string,
-  "bbq": boolean,
-  "bonfire": boolean,
-  "pet": boolean
-}`;
-
-// ============================================================
-// メインコンポーネント
-// ============================================================
 const CleaningScheduleGenerator = () => {
   const [lang, setLang] = useState<Lang>('ja');
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -155,7 +184,6 @@ const CleaningScheduleGenerator = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const tx = t(lang);
 
-  // 画像選択
   const handleImageFile = (file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -179,7 +207,6 @@ const CleaningScheduleGenerator = () => {
     if (file && file.type.startsWith('image/')) handleImageFile(file);
   };
 
-  // GPT-4o 呼び出し
   const generateTasks = async () => {
     if (!imageBase64) return;
     setLoading(true);
@@ -202,11 +229,11 @@ const CleaningScheduleGenerator = () => {
               content: [
                 {
                   type: 'image_url',
-                  image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
+                  image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: 'high' },
                 },
                 {
                   type: 'text',
-                  text: 'Please extract all cleaning tasks from this Excel screenshot and return as JSON array.',
+                  text: 'Extract ALL room rows from this Excel screenshot. Return every row as raw data JSON array. Do not filter anything.',
                 },
               ],
             },
@@ -217,8 +244,11 @@ const CleaningScheduleGenerator = () => {
       const data = await response.json();
       const content = data.choices?.[0]?.message?.content || '';
       const clean = content.replace(/```json|```/g, '').trim();
-      const parsed: Task[] = JSON.parse(clean);
-      setTasks(parsed);
+      const rawRows: RawRow[] = JSON.parse(clean);
+
+      // Apply business logic in code, not AI
+      const filtered = processRawData(rawRows);
+      setTasks(filtered);
 
       const today = new Date();
       setDate(`${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日`);
@@ -230,19 +260,8 @@ const CleaningScheduleGenerator = () => {
     }
   };
 
-  // ユーティリティ
-  const getPriorityColor = (p: Priority) => ({
-    URGENT: 'border-l-red-500 bg-red-50',
-    HIGH:   'border-l-orange-500 bg-orange-50',
-    MEDIUM: 'border-l-yellow-400 bg-yellow-50',
-    LOW:    'border-l-green-400 bg-green-50',
-  }[p] || 'border-l-gray-400 bg-gray-50');
-
   const getPriorityLabel = (p: Priority) => ({
-    URGENT: tx.urgent,
-    HIGH:   tx.high,
-    MEDIUM: tx.medium,
-    LOW:    tx.low,
+    URGENT: tx.urgent, HIGH: tx.high, MEDIUM: tx.medium, LOW: tx.low,
   }[p] || p);
 
   const generateSimpleText = () =>
@@ -254,7 +273,6 @@ const CleaningScheduleGenerator = () => {
       if (task.bbq)         line += ' 🍖BBQ';
       if (task.bonfire)     line += ' 🔥';
       if (task.pet)         line += ' 🐾';
-      if (task.needConfirm) line += ' ⚠️';
       return line;
     }).join('\n');
 
@@ -268,7 +286,7 @@ const CleaningScheduleGenerator = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 p-3 sm:p-5" style={{fontFamily:"'Noto Sans JP', sans-serif"}}>
       <div className="max-w-4xl mx-auto">
 
-        {/* ヘッダー */}
+        {/* Header */}
         <div className="bg-white rounded-2xl shadow-md p-5 mb-4 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">{tx.title}</h1>
@@ -283,10 +301,9 @@ const CleaningScheduleGenerator = () => {
           </button>
         </div>
 
-        {/* アップロードエリア */}
+        {/* Upload */}
         <div className="bg-white rounded-2xl shadow-md p-5 mb-4">
           <h2 className="text-lg font-semibold text-slate-700 mb-4">{tx.uploadTitle}</h2>
-
           <div
             className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition ${dragOver ? 'border-blue-500 bg-blue-50' : 'border-slate-300 hover:border-blue-400 hover:bg-slate-50'}`}
             onClick={() => fileInputRef.current?.click()}
@@ -323,13 +340,12 @@ const CleaningScheduleGenerator = () => {
           </button>
         </div>
 
-        {/* 統計 */}
+        {/* Stats */}
         {tasks.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <div className="grid grid-cols-3 gap-3 mb-4">
             {[
               { val: tasks.length, label: tx.totalRooms, color: '#3b82f6' },
               { val: tasks.filter(t => t.needPR).length, label: tx.prCount, color: '#ef4444' },
-              { val: tasks.filter(t => t.needConfirm).length, label: tx.confirmCount, color: '#f59e0b' },
               { val: tasks.reduce((s, t) => s + t.guestCount, 0), label: tx.totalGuests, color: '#10b981' },
             ].map((s, i) => (
               <div key={i} className="bg-white rounded-xl shadow-sm p-4 text-center">
@@ -340,7 +356,7 @@ const CleaningScheduleGenerator = () => {
           </div>
         )}
 
-        {/* タスクリスト */}
+        {/* Task List */}
         {tasks.length > 0 && (
           <div className="bg-white rounded-2xl shadow-md p-5">
             <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
@@ -380,7 +396,6 @@ const CleaningScheduleGenerator = () => {
                   <p>• {tx.legendPR}</p>
                   <p>• {tx.legendID}</p>
                   <p>• {tx.legendTime}</p>
-                  <p>• {tx.legendWarn}</p>
                 </div>
               </div>
             ) : (
@@ -442,17 +457,10 @@ const CleaningScheduleGenerator = () => {
                     )}
 
                     {(task.bbq || task.bonfire || task.pet) && (
-                      <div className="flex flex-wrap gap-2 mb-2">
+                      <div className="flex flex-wrap gap-2">
                         {task.bbq    && <span className="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 border border-orange-400 text-orange-800">🍖 BBQ</span>}
                         {task.bonfire && <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 border border-red-400 text-red-800">🔥 篝火</span>}
                         {task.pet    && <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 border border-green-400 text-green-800">🐾 ペット</span>}
-                      </div>
-                    )}
-
-                    {task.needConfirm && (
-                      <div className="flex gap-2 bg-red-50 border-2 border-red-400 rounded-lg p-3 text-sm">
-                        <AlertCircle size={15} className="text-red-600 mt-0.5 flex-shrink-0"/>
-                        <div><strong className="text-red-700">⚠️</strong> {tx.confirmMsg}</div>
                       </div>
                     )}
                   </div>
@@ -462,10 +470,8 @@ const CleaningScheduleGenerator = () => {
           </div>
         )}
       </div>
-
       <style>{`
         @media print { .no-print { display: none !important; } body { background: white; } }
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
       `}</style>
     </div>
   );
