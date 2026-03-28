@@ -77,49 +77,66 @@ const t = (lang: Lang) => ({
 const SYSTEM_PROMPT = `You are an expert at reading Japanese hotel Excel spreadsheets.
 Extract cleaning tasks and return ONLY a valid JSON array. No markdown, no explanation.
 
-COLUMN LOCATIONS (read carefully from the spreadsheet):
-- H column: Room name (ROOM)
+COLUMN GUIDE:
+- H column: Room name (ROOM) - e.g. MOKA, KOKO, NOA, Villa A, 月江苑
 - I column: Room code (4-digit number)
-- J column: Platform/abdr
+- J column: Platform (Agoda, A, B-DR, etc.)
 - K column: Guest name (予約者名)
-- L column: Booking system
-- M column: DR status (ステータス)
-- N column: Arrival time (到着予定), may also contain BBQ/bonfire/pet info
-- O column: 室 (room count, usually 1)
-- P column: 人 (total guest count)
-- Q column: 大 (adults)
-- R column: 子 (children)
-- S column: 齢 (age info)
-- T column: 連泊 (continuous stay flag)
-- U column: 備考 (contact info, notes)
-- AA column (last column, 当日): today's date number or "x"
+- L column: Booking system (Stan, Edrian, etc.)
+- M column: DR status
+- N column: Arrival time (到着予定) + special info (BBQ, 篝火, ペット)
+- P column: Total guest count (人)
+- T column: 連泊 (continuous stay flag) - look carefully, may contain S, K, or E
+- U column: Contact info (備考)
+- AA column: 当日 - the LAST column on the right, contains a number (e.g. 29) or "x" or blank
 
-CLEANING RULES - APPLY IN THIS EXACT ORDER:
+STEP 1 - GO THROUGH EVERY ROW ONE BY ONE:
+For each room row, read the AA column (last column):
+- Contains a number → candidate for cleaning
+- Contains "x" or "X" → SKIP this room
+- Blank → SKIP this room
 
-STEP 1 - Check AA column (last column, 当日):
-- AA has ANY number (e.g. "29", "28", "30") → INCLUDE for cleaning
-- AA = "x" or "X" → EXCLUDE (already cleaned)
-- AA = blank → EXCLUDE
+STEP 2 - FOR EACH CANDIDATE, CHECK T COLUMN CAREFULLY:
+- T = "K" → REMOVE from list (guest is mid-stay)
+- T = "E" → REMOVE from list (guest is last night of stay)  
+- T = "S" → KEEP (first night of new continuous stay)
+- T = blank or anything else → KEEP
 
-STEP 2 - Check T column (連泊) to filter:
-- T = "K" → EXCLUDE from cleaning list
-- T = "E" → EXCLUDE from cleaning list
-- T = "S" → KEEP (first night of continuous stay)
-- T = blank or any other value → KEEP
+STEP 3 - SET PR AND PRIORITY:
+- K column has a guest name → needPR: true, cleaningPriority: "HIGH"
+- K column is empty/blank → needPR: false, cleaningPriority: "MEDIUM"
 
-RESULT: Include rooms where AA has a number AND T is NOT "K" and NOT "E".
+STEP 4 - OTHER FLAGS:
+- G column value is not 0 and not blank → needIdCheck: true, otherwise false
+- Extract arrival time from N column
+- Detect BBQ / 篝火(bonfire) / ペット(pet) in N or U columns
+- needConfirm: false for all
 
-PR AND PRIORITY RULES (for included rooms):
-- K column HAS a guest name → needPR: true, cleaningPriority: "HIGH"
-- K column has NO guest name → needPR: false, cleaningPriority: "MEDIUM" (checkout cleaning, no new guest today)
+IMPORTANT: 
+- Process EVERY room row in the spreadsheet. Do not skip rows.
+- Read T column very carefully for each row - it may look empty but check closely.
+- Read AA column (the rightmost column) for every row.
 
-ARRIVAL TIME:
-- If N column has arrival time → include in arrivalTime field
-
-OTHER RULES:
-- G column ≠ 0 → needIdCheck: true
-- N column: detect BBQ/bonfire(篝火)/pet(ペット) mentions
-- needConfirm: false
+Return JSON array with objects:
+{
+  "room": string,
+  "roomCode": string,
+  "platform": string,
+  "guestName": string,
+  "bookingSystem": string,
+  "status": string,
+  "arrivalTime": string,
+  "guestCount": number,
+  "needIdCheck": boolean,
+  "needPR": boolean,
+  "needConfirm": boolean,
+  "contact": string,
+  "cleaningPriority": "URGENT"|"HIGH"|"MEDIUM"|"LOW",
+  "notes": string,
+  "bbq": boolean,
+  "bonfire": boolean,
+  "pet": boolean
+}`;
 
 IMPORTANT: Include ALL rooms where AA = today's date. Do not skip any room.
 
