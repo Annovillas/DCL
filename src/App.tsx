@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, Calendar, Users, Clock, AlertCircle, CheckCircle, FileText } from 'lucide-react';
+import { Users, Clock, AlertCircle, FileText } from 'lucide-react';
 
 const CleaningScheduleGenerator = () => {
   const [tasks, setTasks] = useState([]);
@@ -7,347 +7,131 @@ const CleaningScheduleGenerator = () => {
   const [uploadStatus, setUploadStatus] = useState('');
   const [showSimpleView, setShowSimpleView] = useState(false);
 
-  // 根据实际Excel格式的演示数据
-  // 只有AA列=23的房间才需要清扫
   const demoData = [
+    // AA列=28 需要清掃
     {
-      date: '2026/03/23',
-      room: 'MOKA',
-      roomCode: '9910',
-      aaColumn: '23',  // AA列=23，需要清扫
-      platform: '',
-      guestName: '',
-      bookingSystem: '',
-      status: '',
-      arrivalTime: '',
-      guestCount: 2,
-      needIdCheck: false,
-      needPR: false,
-      contact: '',
-      cleaningPriority: 'MEDIUM',
-      notes: '23日清掃'
+      room: 'KOKO', roomCode: '9920', aaColumn: '28',
+      platform: 'Agoda', guestName: 'Kokoro Haga', bookingSystem: 'Edrian',
+      status: '', arrivalTime: '16:30', guestCount: 2,
+      needIdCheck: false, needPR: true,
+      contact: 'Tel +090-2626-5563\ncocorotomato@gmail.com',
+      cleaningPriority: 'HIGH', notes: '当日チェックアウト→チェックイン'
     },
     {
-      date: '2026/03/23',
-      room: 'KOKO',
-      roomCode: '9920',
-      aaColumn: '23',  // AA列=23，需要清扫
-      platform: 'Agoda',
-      guestName: 'riku yokoyama',
-      bookingSystem: 'Edrian',
-      status: 'END NO DR',
-      arrivalTime: '15:00',
-      guestCount: 2,
-      needIdCheck: false,
-      needPR: true,
-      contact: 'Tel +08070620806\nyokoyama.riku@icloud.com',
-      cleaningPriority: 'HIGH',
-      notes: '当日チェックアウト→チェックイン'
+      room: 'MARU', roomCode: '9930', aaColumn: '28',
+      platform: '', guestName: 'YUMI SHIBANO', bookingSystem: 'Stan',
+      status: '', arrivalTime: '', guestCount: 4,
+      needIdCheck: false, needPR: true,
+      contact: 'Tel +81 70 1004 7530',
+      cleaningPriority: 'MEDIUM', notes: '28日チェックイン準備'
     },
     {
-      date: '2026/03/23',
-      room: 'MARU',
-      roomCode: '9930',
-      aaColumn: '24',  // AA列=24，明日準備，今天也要清扫
-      platform: '',
-      guestName: 'mio morizumi',
-      bookingSystem: 'Edrian',
-      status: 'DR ASKING',
-      arrivalTime: '17:00',
-      guestCount: 4,
-      needIdCheck: false,
-      needPR: true,
-      contact: 'Tel +81 80 3138 2423',
-      cleaningPriority: 'MEDIUM',
-      notes: '24日チェックイン準備'
+      room: 'RUNA', roomCode: '9940', aaColumn: '28',
+      platform: 'Agoda', guestName: 'ASAKO HAYASHI', bookingSystem: 'Edrian',
+      status: 'DR ASKING', arrivalTime: '20:00', guestCount: 3,
+      needIdCheck: false, needPR: true,
+      contact: 'asako27iii@gmail.com\n090-4932-7833',
+      cleaningPriority: 'HIGH', notes: '当日チェックアウト→チェックイン'
     },
     {
-      date: '2026/03/23',
-      room: 'RUNA',
-      roomCode: '9940',
-      aaColumn: '24',  // AA列=24
-      platform: '',
-      guestName: 'Matthias Bruun Kobbernagel',
-      bookingSystem: 'Stan',
-      status: '',
-      arrivalTime: '',
-      guestCount: 2,
-      needIdCheck: true,
-      needPR: true,
-      contact: 'Tel +45 51 24 07 95',
-      cleaningPriority: 'MEDIUM',
-      notes: '証明書確認必要！ 24日チェックイン'
+      room: 'MEI', roomCode: '9950', aaColumn: '28',
+      platform: '', guestName: 'Eric Tang', bookingSystem: 'Stan',
+      status: 'DR ASKING', arrivalTime: '16:00', guestCount: 4,
+      needIdCheck: false, needPR: true,
+      contact: 'Tel +81 80 9181 6820\nerictang5566@gmail.com',
+      cleaningPriority: 'HIGH', notes: '当日チェックアウト→チェックイン'
     },
     {
-      date: '2026/03/23',
-      room: 'MEI',
-      roomCode: '9950',
-      aaColumn: '23',  // AA列=23，需要清扫
-      platform: '',
-      guestName: 'Maud Broen',
-      bookingSystem: 'Stan',
-      status: 'END NO DR',
-      arrivalTime: '16:00',
-      guestCount: 2,
-      needIdCheck: false,
-      needPR: true,
-      contact: 'Tel +31 6 40976956',
-      cleaningPriority: 'HIGH',
-      notes: '当日チェックアウト→チェックイン'
+      room: 'RIN', roomCode: '9960', aaColumn: '28',
+      platform: 'Agoda', guestName: 'Yong Jia En', bookingSystem: 'Edrian',
+      status: '', arrivalTime: '15:00-16:00', guestCount: 2,
+      needIdCheck: false, needPR: true,
+      contact: 'jiaenyje@hotmail.com',
+      cleaningPriority: 'HIGH', notes: '当日チェックアウト→チェックイン'
     },
     {
-      date: '2026/03/23',
-      room: 'NOA',
-      roomCode: '9909',
-      aaColumn: 'x',  // AA列=x，不需要清扫（已准备好）
-      platform: '',
-      guestName: '',
-      bookingSystem: '',
-      status: '',
-      arrivalTime: '',
-      guestCount: 2,
-      needIdCheck: false,
-      needPR: false,
-      contact: '',
-      cleaningPriority: 'LOW',
-      notes: '清掃済み',
-      shouldClean: false  // 不需要清扫
+      room: 'MOMO', roomCode: '9980', aaColumn: '28',
+      platform: '', guestName: 'Misaki Tatsuta', bookingSystem: 'Stan',
+      status: '', arrivalTime: '18:00-19:00', guestCount: 2,
+      needIdCheck: false, needPR: true,
+      contact: 'Tel +81 80 6550 0090\nnagitarou1007@gmail.com',
+      cleaningPriority: 'MEDIUM', notes: '28日チェックイン準備'
     },
     {
-      date: '2026/03/23',
-      room: 'RIN',
-      roomCode: '9960',
-      aaColumn: 'x',  // AA列=x，不需要清扫
-      platform: '',
-      guestName: '',
-      bookingSystem: 'Stan',
-      status: '',
-      arrivalTime: '',
-      guestCount: 2,
-      needIdCheck: false,
-      needPR: false,
-      contact: '',
-      cleaningPriority: 'LOW',
-      notes: '清掃済み',
-      shouldClean: false
+      room: '月江苑', roomCode: '9926', aaColumn: '28',
+      platform: 'Agoda', guestName: 'Pailin Jakpa', bookingSystem: 'Edrian',
+      status: 'DR ASKING', arrivalTime: '', guestCount: 8,
+      needIdCheck: false, needPR: true,
+      contact: 'Tel +66 955922440\npailin2001@icloud.com',
+      cleaningPriority: 'MEDIUM', notes: '28日チェックイン準備'
     },
     {
-      date: '2026/03/23',
-      room: 'LEO',
-      roomCode: '9970',
-      aaColumn: 'x',  // AA列=x，不需要清扫
-      platform: 'Agoda',
-      guestName: 'Zheng Liang',
-      bookingSystem: 'Edrian',
-      status: 'END NO DR',
-      arrivalTime: '18:00',
-      guestCount: 3,
-      needIdCheck: false,
-      needPR: true,
-      contact: 'Tel +86 18511096150',
-      cleaningPriority: 'MEDIUM',
-      notes: '清掃済み、24日チェックイン',
-      shouldClean: false
+      room: 'Villa A', roomCode: '9916', aaColumn: '28',
+      platform: '', guestName: 'SYAHDIMIN RASHIDI', bookingSystem: 'Stan',
+      status: 'DR ASKING', arrivalTime: '15:00', guestCount: 5,
+      needIdCheck: false, needPR: true,
+      contact: 'Tel +60 19 815 6642\nsyahdimin@yahoo.com',
+      cleaningPriority: 'HIGH', notes: '当日チェックアウト→チェックイン'
     },
     {
-      date: '2026/03/23',
-      room: '月江苑',
-      roomCode: '9926',
-      aaColumn: 'x',  // AA列=x，不需要清扫
-      platform: '',
-      guestName: '',
-      bookingSystem: '',
-      status: '',
-      arrivalTime: '',
-      guestCount: 0,
-      needIdCheck: false,
-      needPR: false,
-      contact: '',
-      cleaningPriority: 'LOW',
-      notes: '清掃済み',
-      shouldClean: false
+      room: 'Villa B', roomCode: '9926', aaColumn: '28',
+      platform: '', guestName: 'Koji Nakamura', bookingSystem: 'Stan',
+      status: 'DR ASKING', arrivalTime: '', guestCount: 10,
+      needIdCheck: false, needPR: true,
+      contact: 'Tel +81 90 6585 4251\nkoji.kiyono.nowa@icloud.com',
+      cleaningPriority: 'MEDIUM', notes: '28日チェックイン準備'
     },
     {
-      date: '2026/03/23',
-      room: 'Grand V',
-      roomCode: '9956',
-      aaColumn: '23',  // AA列=23，需要清扫
-      platform: 'Agoda',
-      guestName: 'okada',
-      bookingSystem: 'Edrian',
-      status: '',
-      arrivalTime: '',
-      guestCount: 4,
-      needIdCheck: false,
-      needPR: true,
-      contact: 'Tel +81 09071323936',
-      cleaningPriority: 'MEDIUM',
-      notes: '24日チェックイン準備'
+      room: 'Villa C', roomCode: '9936', aaColumn: '28',
+      platform: '', guestName: 'NITIN AGSTWAL', bookingSystem: 'Edrian',
+      status: 'DR ASKING', arrivalTime: '21:00-23:00', guestCount: 4,
+      needIdCheck: false, needPR: true,
+      contact: 'Tel +91 97850 03111\nindia.appletours@gmail.com',
+      cleaningPriority: 'HIGH', notes: '当日チェックアウト→チェックイン'
     },
     {
-      date: '2026/03/23',
-      room: 'panorama',
-      roomCode: '9946',
-      aaColumn: '23',  // AA列=23，需要清扫
-      platform: '',
-      guestName: '',
-      bookingSystem: '',
-      status: '',
-      arrivalTime: '',
-      guestCount: 3,
-      needIdCheck: false,
-      needPR: false,
-      contact: '',
-      cleaningPriority: 'MEDIUM',
-      notes: '清掃準備'
+      room: 'cube', roomCode: '9862', aaColumn: '28',
+      platform: 'A', guestName: 'Andre Wilis', bookingSystem: 'Stan',
+      status: 'Waiting to accept', arrivalTime: '16:00-17:00', guestCount: 4,
+      needIdCheck: false, needPR: true,
+      contact: 'Tel +62 812 9636 0102\nwilisandre12345@gmail.com',
+      cleaningPriority: 'HIGH', notes: '当日チェックアウト→チェックイン'
     },
     {
-      date: '2026/03/23',
-      room: 'Villa A',
-      roomCode: '9916',
-      aaColumn: 'x',  // AA列=x，不需要清扫！
-      platform: '',
-      guestName: 'AKIKO ITAGAKI',
-      bookingSystem: 'Edrian',
-      status: '',
-      arrivalTime: '',
-      guestCount: 8,
-      needIdCheck: false,
-      needPR: true,
-      contact: '',
-      cleaningPriority: 'LOW',
-      notes: '清掃済み',
-      shouldClean: false  // 不需要清扫
+      room: 'Villa E', roomCode: '9976', aaColumn: '28',
+      platform: 'A', guestName: '宮島 Kentaro Miyajima', bookingSystem: 'Edrian',
+      status: '', arrivalTime: '13:00', guestCount: 4,
+      needIdCheck: false, needPR: true,
+      contact: 'Tel 080-2530-6659\nmiyajimakentaro1012@gmail.com\n※early check-in 1PM guest will pay 5,000 JPY and late check out',
+      cleaningPriority: 'MEDIUM', notes: '28日チェックイン準備'
     },
+    // AA列=x 清掃済み（表示しない）
+    // MOKA, NOA, LEO, Villa D, Villa F → shouldClean: false
+    // Grand V, panorama → T列あり（連泊）→ 清掃不要
+    // NOA: AA=x だが DR DONE あり、到着17:00
     {
-      date: '2026/03/23',
-      room: 'Villa B',
-      roomCode: '9926',
-      aaColumn: 'x',  // AA列=x，不需要清扫！
-      platform: '',
-      guestName: '',
-      bookingSystem: '',
-      status: '',
-      arrivalTime: '',
-      guestCount: 3,
-      needIdCheck: false,
-      needPR: false,
-      contact: '',
-      cleaningPriority: 'MEDIUM',
-      notes: '清掃済み',
-      shouldClean: false  // 不需要清扫
+      room: 'NOA', roomCode: '9909', aaColumn: 'x',
+      platform: 'B-DR', guestName: 'RIKA ISAYAMA', bookingSystem: 'Stan blocked',
+      status: 'DR DONE', arrivalTime: '17:00', guestCount: 5,
+      needIdCheck: false, needPR: true,
+      contact: 'Tel l+81 18411946\nriku.07020530@gmail.com',
+      cleaningPriority: 'LOW', notes: '清掃済み', shouldClean: false
     },
+    // Villa G: AA=28
     {
-      date: '2026/03/23',
-      room: 'Villa C',
-      roomCode: '9936',
-      aaColumn: '23',  // AA列=23，需要清扫
-      platform: '',
-      guestName: '',
-      bookingSystem: '',
-      status: '',
-      arrivalTime: '',
-      guestCount: 3,
-      needIdCheck: false,
-      needPR: false,
-      contact: '',
-      cleaningPriority: 'MEDIUM',
-      notes: '清掃準備'
+      room: 'Villa G', roomCode: '9695', aaColumn: '28',
+      platform: 'Agoda', guestName: 'tosa takamichi', bookingSystem: 'Edrian',
+      status: 'DR ASKING', arrivalTime: '', guestCount: 2,
+      needIdCheck: false, needPR: true,
+      contact: 'Tel 07022987321\ntakamichidaze@icloud.com',
+      cleaningPriority: 'MEDIUM', notes: '28日チェックイン準備'
     },
-    {
-      date: '2026/03/23',
-      room: 'cube',
-      roomCode: '9862',
-      aaColumn: '23',  // AA列=23，需要清扫
-      platform: 'A',
-      guestName: 'Srila B',
-      bookingSystem: 'Stan',
-      status: 'DR ASKING',
-      arrivalTime: '18:00',
-      guestCount: 3,
-      needIdCheck: false,
-      needPR: true,
-      contact: 'Tel +91 63665 21898',
-      cleaningPriority: 'HIGH',
-      notes: '当日準備必要'
-    },
-    {
-      date: '2026/03/23',
-      room: 'Villa D',
-      roomCode: '9966',
-      aaColumn: 'x',  // AA列=x，不需要清扫
-      platform: 'Agoda',
-      guestName: 'Thanh Thanh',
-      bookingSystem: 'Edrian',
-      status: '',
-      arrivalTime: '15:00',
-      guestCount: 9,
-      needIdCheck: false,
-      needPR: true,
-      contact: 'Tel +81 09022308386',
-      cleaningPriority: 'LOW',
-      notes: '清掃済み',
-      shouldClean: false  // 不需要清扫
-    },
-    {
-      date: '2026/03/23',
-      room: 'Villa E',
-      roomCode: '9976',
-      aaColumn: 'x',  // AA列=x，不需要清扫
-      platform: 'Agoda',
-      guestName: 'NYAT',
-      bookingSystem: 'Edrian',
-      status: '',
-      arrivalTime: '',
-      guestCount: 6,
-      needIdCheck: false,
-      needPR: true,
-      contact: '',
-      cleaningPriority: 'LOW',
-      notes: '清掃済み',
-      shouldClean: false
-    },
-    {
-      date: '2026/03/23',
-      room: 'Villa F',
-      roomCode: '9986',
-      aaColumn: '23',  // AA列=23，需要清扫
-      platform: '',
-      guestName: '',
-      bookingSystem: '',
-      status: '',
-      arrivalTime: '',
-      guestCount: 4,
-      needIdCheck: false,
-      needPR: false,
-      contact: '',
-      cleaningPriority: 'MEDIUM',
-      notes: '清掃準備'
-    },
-    {
-      date: '2026/03/23',
-      room: 'Villa G',
-      roomCode: '9695',
-      aaColumn: '24',  // AA列=24，明日準備，今天不需要清扫
-      platform: 'Agoda',
-      guestName: 'Yin Yin Tan',
-      bookingSystem: 'Edrian',
-      status: '',
-      arrivalTime: '',
-      guestCount: 10,
-      needIdCheck: false,
-      needPR: true,
-      contact: '',
-      cleaningPriority: 'MEDIUM',
-      notes: '24日チェックイン準備',
-      shouldClean: false  // 今天不需要清扫
-    }
-  ].filter(task => task.shouldClean !== false);  // 过滤掉不需要清扫的房间
+  ].filter(task => task.shouldClean !== false);
 
   const loadDemoData = () => {
     setTasks(demoData);
-    setDate('2026年3月23日');
-    setUploadStatus('✓ デモデータを読み込みました');
+    setDate('2026年3月28日');
+    setUploadStatus('✓ 2026年3月28日のデータを読み込みました');
   };
 
   const getPriorityColor = (priority) => {
@@ -371,12 +155,11 @@ const CleaningScheduleGenerator = () => {
   };
 
   const generateSimpleText = () => {
-    return displayTasks.map(task => {
-      let line = `${task.room} ${task.guestCount}`;
-      if (task.bedConfig) line += ` (${task.bedConfig})`;  // 床位配置
+    return tasks.map(task => {
+      let line = `${task.room} ${task.guestCount}名`;
       if (task.needIdCheck) line += ' 🆔';
       if (task.needPR) line += ' PR';
-      if (task.arrivalTime) line += ` [${task.arrivalTime}]`;  // 用方括号区分
+      if (task.arrivalTime) line += ` [${task.arrivalTime}]`;
       if (task.bbq) line += ' 🍖BBQ';
       if (task.bonfire) line += ' 🔥';
       if (task.pet) line += ' 🐾';
@@ -391,7 +174,6 @@ const CleaningScheduleGenerator = () => {
     alert('コピーしました！');
   };
 
-  // 不排序，保持Excel原始顺序
   const displayTasks = tasks;
 
   return (
@@ -402,20 +184,20 @@ const CleaningScheduleGenerator = () => {
             🏠 清掃タスク自動生成システム
           </h1>
           <p className="text-sm sm:text-base text-gray-600">
-            Excelデータから優先度順の清掃タスクを自動生成
+            2026年3月28日（土）清掃リスト
           </p>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-800">
-              📤 予約データ読み込み
+              📅 2026年3月28日 データ
             </h2>
             <button
               onClick={loadDemoData}
               className="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold shadow-md text-sm sm:text-base"
             >
-              デモデータを表示
+              28日の清掃リストを表示
             </button>
           </div>
 
@@ -426,14 +208,11 @@ const CleaningScheduleGenerator = () => {
           )}
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="font-semibold text-blue-800 mb-3">📋 読み取り対象:</h3>
             <div className="grid grid-cols-2 gap-2 text-sm text-blue-700">
-              <div>• <strong>AA列</strong>: 清掃日 (23=清掃、x=不要、空白=要確認)</div>
-              <div>• <strong>K列</strong>: 予約者名 (あれば→PR優先清掃)</div>
-              <div>• <strong>G列</strong>: 証明書確認フラグ (≠0なら要確認)</div>
-              <div>• <strong>N列</strong>: 到着時間・BBQ・篝火・ペット情報</div>
-              <div>• <strong>H列</strong>: 客室名</div>
-              <div>• <strong>Z列</strong>: 清掃準備人数</div>
+              <div>• <strong>AA列=28</strong>: 本日清掃必要</div>
+              <div>• <strong>AA列=x</strong>: 清掃済み（除外）</div>
+              <div>• <strong>AA列=空白</strong>: ⚠️ 要確認</div>
+              <div>• <strong>PR</strong>: 予約者名あり→優先清掃</div>
             </div>
           </div>
         </div>
@@ -452,9 +231,9 @@ const CleaningScheduleGenerator = () => {
             </div>
             <div className="bg-white rounded-lg shadow p-4">
               <div className="text-2xl font-bold text-orange-600">
-                {tasks.filter(t => t.needIdCheck).length}
+                {tasks.filter(t => t.needConfirm).length}
               </div>
-              <div className="text-sm text-gray-600">証明書確認必要</div>
+              <div className="text-sm text-gray-600">⚠️ 要確認</div>
             </div>
             <div className="bg-white rounded-lg shadow p-4">
               <div className="text-2xl font-bold text-green-600">
@@ -506,15 +285,12 @@ const CleaningScheduleGenerator = () => {
 {generateSimpleText()}
                   </pre>
                 </div>
-
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <h4 className="font-semibold text-blue-800 mb-2">記号説明:</h4>
                   <div className="text-sm text-blue-700 space-y-1">
-                    <p>• <strong>PR</strong> = 優先清掃（K列に予約者名あり）</p>
-                    <p>• <strong>🆔</strong> = 証明書確認必要（G列≠0）</p>
-                    <p>• <strong>(床位配置)</strong> = ベッド配置情報</p>
-                    <p>• <strong>[時間]</strong> = 到着予定時間（N列）</p>
-                    <p>• <strong>🍖 BBQ</strong> / <strong>🔥 篝火</strong> / <strong>🐾 ペット</strong> = 特殊計画</p>
+                    <p>• <strong>PR</strong> = 優先清掃</p>
+                    <p>• <strong>🆔</strong> = 証明書確認必要</p>
+                    <p>• <strong>[時間]</strong> = 到着予定時間</p>
                     <p>• <strong>⚠️</strong> = AA列空白、清掃要否確認必要</p>
                   </div>
                 </div>
@@ -528,9 +304,7 @@ const CleaningScheduleGenerator = () => {
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3 flex-wrap">
-                        <h3 className="text-2xl font-bold text-gray-800">
-                          {task.room}
-                        </h3>
+                        <h3 className="text-2xl font-bold text-gray-800">{task.room}</h3>
                         <span className="px-3 py-1 rounded-full text-xs font-bold bg-white shadow">
                           {getPriorityLabel(task.cleaningPriority)}
                         </span>
@@ -549,7 +323,7 @@ const CleaningScheduleGenerator = () => {
                         )}
                         {task.needPR && (
                           <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-600 text-white">
-                            PR 準備
+                            PR 優先
                           </span>
                         )}
                       </div>
@@ -588,15 +362,6 @@ const CleaningScheduleGenerator = () => {
                             </div>
                           </div>
                         )}
-                        {task.bedConfig && (
-                          <div className="flex items-start gap-2 mb-2">
-                            <span className="text-blue-600 text-lg">🛏️</span>
-                            <div>
-                              <span className="font-semibold">ベッド配置:</span>
-                              <p className="text-md font-medium text-blue-700">{task.bedConfig}</p>
-                            </div>
-                          </div>
-                        )}
                         {task.status && (
                           <div className="flex items-center gap-2 mt-2">
                             <FileText size={18} className="text-blue-600" />
@@ -624,27 +389,6 @@ const CleaningScheduleGenerator = () => {
                           <strong className="text-gray-800">備考:</strong>
                           <p className="text-gray-700 mt-1">{task.notes}</p>
                         </div>
-                      </div>
-                    )}
-
-                    {/* 特殊计划标记 */}
-                    {(task.bbq || task.bonfire || task.pet) && (
-                      <div className="flex flex-wrap gap-2">
-                        {task.bbq && (
-                          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 border border-orange-400 text-orange-800">
-                            🍖 BBQ使用予定
-                          </span>
-                        )}
-                        {task.bonfire && (
-                          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 border border-red-400 text-red-800">
-                            🔥 篝火使用予定
-                          </span>
-                        )}
-                        {task.pet && (
-                          <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 border border-green-400 text-green-800">
-                            🐾 ペット同伴
-                          </span>
-                        )}
                       </div>
                     )}
 
