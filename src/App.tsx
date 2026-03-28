@@ -26,8 +26,9 @@ interface Task {
 
 // Verified column indices (0-based) from actual Excel file:
 // B=1(date), H=7(ROOM), I=8(code), J=9(platform), K=10(guest),
-// L=11(status), M=12(DR), N=13(arrival), P=15(pax), T=19(連泊), U=20(contact), AA=26(当日)
-const C = { B:1, H:7, I:8, J:9, K:10, L:11, M:12, N:13, P:15, T:19, U:20, AA:26 };
+// L=11(status), M=12(DR), N=13(arrival), P=15(pax), T=19(連泊),
+// U=20(contact), AA=26(当日), AF=31(当日firstcheck)
+const C = { B:1, H:7, I:8, J:9, K:10, L:11, M:12, N:13, P:15, T:19, U:20, AA:26, AF:31 };
 
 const ROOMS = new Set([
   'MOKA','KOKO','MARU','RUNA','MEI','NOA','RIN','LEO','MOMO',
@@ -51,7 +52,7 @@ const formatTime = (val: unknown): string => {
   return String(val);
 };
 
-const parseExcelFile = (file: File, targetDate: Date): Promise<Task[]> => {
+const parseExcelFile = (file: File): Promise<Task[]> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -65,36 +66,25 @@ const parseExcelFile = (file: File, targetDate: Date): Promise<Task[]> => {
         const rows: unknown[][] = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null });
 
         const tasks: Task[] = [];
-        let inTargetDate = false;
-
-        for (let i = 0; i < rows.length; i++) {
+        // Data is always in rows 4-23 (index 3-22)
+        for (let i = 3; i <= 22; i++) {
           const row = rows[i] as unknown[];
-          const colB = row[C.B];
-
-          // Check if this row has a date in column B
-          if (colB instanceof Date || (typeof colB === 'number' && colB > 40000)) {
-            const d = colB instanceof Date ? colB : new Date((colB - 25569) * 86400 * 1000);
-            inTargetDate = d.getDate() === targetDate.getDate() &&
-                           d.getMonth() === targetDate.getMonth() &&
-                           d.getFullYear() === targetDate.getFullYear();
-            continue;
-          }
-
-          if (!inTargetDate) continue;
+          if (!row) continue;
 
           const room = String(row[C.H] || '').trim();
           if (!ROOMS.has(room)) continue;
 
-          const aa = row[C.AA];
-          const aaStr = String(aa ?? '').trim().toLowerCase();
-
-          // Rule 1: AA must be a number (not 'x' and not empty)
-          if (!aa || aaStr === 'x' || aaStr === 'null' || aaStr === '') continue;
-          if (isNaN(Number(aa))) continue;
-
-          // Rule 2: T column must NOT be K or E
+          // Rule 1: T must NOT be K or E
           const tVal = String(row[C.T] ?? '').trim().toUpperCase();
           if (tVal === 'K' || tVal === 'E') continue;
+
+          // Rule 2: AA has a number OR AF(firstcheck)='need'
+          const aa    = row[C.AA];
+          const aaStr = String(aa ?? '').trim().toLowerCase();
+          const af    = String(row[C.AF] ?? '').trim().toLowerCase();
+          const aaHasNumber = aa && aaStr !== 'x' && aaStr !== '' && !isNaN(Number(aa));
+          const afNeed = af === 'need';
+          if (!aaHasNumber && !afNeed) continue;
 
           const guestName  = String(row[C.K] || '').trim();
           const contact    = String(row[C.U] || '').trim();
@@ -175,8 +165,9 @@ const priorityColor = (p: Priority) => ({
 export default function App() {
   const [lang, setLang]           = useState<Lang>('ja');
   const [tasks, setTasks]         = useState<Task[]>([]);
-  const [dateStr, setDateStr]     = useState(() => {
-    const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const [dateStr, setDateStr] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   });
   const [displayDate, setDisplayDate] = useState('');
   const [showSimple, setShowSimple]   = useState(false);
@@ -194,11 +185,10 @@ export default function App() {
     if (!file) { setError(tx.noFile); return; }
     setError('');
     try {
-      const targetDate = new Date(dateStr + 'T00:00:00');
-      const result = await parseExcelFile(file, targetDate);
+      const result = await parseExcelFile(file);
       setTasks(result);
       setGenerated(true);
-      const d = targetDate;
+      const d = new Date(dateStr + 'T00:00:00');
       setDisplayDate(`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`);
     } catch (e) {
       console.error(e);
