@@ -138,29 +138,6 @@ Return JSON array with objects:
   "pet": boolean
 }`;
 
-IMPORTANT: Include ALL rooms where AA = today's date. Do not skip any room.
-
-Return JSON array with objects:
-{
-  "room": string,
-  "roomCode": string,
-  "platform": string,
-  "guestName": string,
-  "bookingSystem": string,
-  "status": string,
-  "arrivalTime": string,
-  "guestCount": number,
-  "needIdCheck": boolean,
-  "needPR": boolean,
-  "needConfirm": boolean,
-  "contact": string,
-  "cleaningPriority": "URGENT"|"HIGH"|"MEDIUM"|"LOW",
-  "notes": string,
-  "bbq": boolean,
-  "bonfire": boolean,
-  "pet": boolean
-}`;
-
 // ============================================================
 // メインコンポーネント
 // ============================================================
