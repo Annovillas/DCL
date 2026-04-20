@@ -13,57 +13,57 @@ const VILLA_ORDER = [
 // field: { label, key, default }
 const VILLA_BED_CONFIG: Record<string, { floor: string, fields: { label: string, key: string, def: number }[] }[]> = {
   'Grand V': [
-    { floor: '1F', fields: [{ label:'S', key:'1f_s1', def:0 }, { label:'S', key:'1f_s2', def:0 }] },
+    { floor: '1F', fields: [{ label:'S', key:'1f_s1', def:2 }, { label:'S', key:'1f_s2', def:1 }] },
     { floor: '2F', fields: [{ label:'J', key:'2f_j', def:0 }, { label:'Sofa', key:'2f_sofa', def:0 }] },
   ],
   'Panorama V': [
     { floor: '1F', fields: [{ label:'J', key:'1f_j', def:0 }] },
-    { floor: '2F', fields: [{ label:'J', key:'2f_j', def:0 }, { label:'D', key:'2f_d', def:0 }, { label:'S', key:'2f_s', def:0 }] },
+    { floor: '2F', fields: [{ label:'J', key:'2f_j', def:2 }, { label:'D', key:'2f_d', def:1 }, { label:'S', key:'2f_s', def:0 }] },
   ],
   'Villa A': [
     { floor: '1F', fields: [{ label:'J', key:'1f_j', def:0 }] },
-    { floor: '2F', fields: [{ label:'QD', key:'2f_qd', def:0 }, { label:'SD', key:'2f_sd', def:0 }, { label:'J', key:'2f_j', def:0 }] },
+    { floor: '2F', fields: [{ label:'QD', key:'2f_qd', def:1 }, { label:'SD', key:'2f_sd', def:2 }, { label:'J', key:'2f_j', def:0 }] },
   ],
   'Villa B': [
     { floor: '1F', fields: [{ label:'J', key:'1f_j', def:0 }] },
-    { floor: '2F', fields: [{ label:'QD', key:'2f_qd', def:0 }, { label:'SD', key:'2f_sd', def:0 }, { label:'J', key:'2f_j', def:0 }] },
+    { floor: '2F', fields: [{ label:'QD', key:'2f_qd', def:1 }, { label:'SD', key:'2f_sd', def:2 }, { label:'J', key:'2f_j', def:0 }] },
   ],
   'Villa C': [
     { floor: '1F', fields: [{ label:'J', key:'1f_j', def:0 }] },
-    { floor: '2F', fields: [{ label:'J', key:'2f_j', def:0 }, { label:'D', key:'2f_d', def:0 }, { label:'S', key:'2f_s', def:0 }] },
+    { floor: '2F', fields: [{ label:'J', key:'2f_j', def:2 }, { label:'D', key:'2f_d', def:1 }, { label:'S', key:'2f_s', def:0 }] },
   ],
   'CUBE': [
-    { floor: '2F', fields: [{ label:'D', key:'2f_d', def:0 }, { label:'S', key:'2f_s', def:0 }] },
+    { floor: '2F', fields: [{ label:'D', key:'2f_d', def:2 }, { label:'S', key:'2f_s', def:0 }] },
   ],
   'Gekkouen': [
     { floor: '1F', fields: [{ label:'BigJ', key:'1f_bj', def:0 }, { label:'SmallJ', key:'1f_sj', def:0 }] },
-    { floor: '2F South', fields: [{ label:'S', key:'2fs_s', def:0 }, { label:'J', key:'2fs_j', def:0 }] },
+    { floor: '2F South', fields: [{ label:'S', key:'2fs_s', def:2 }, { label:'J', key:'2fs_j', def:2 }] },
     { floor: '2F North', fields: [{ label:'D', key:'2fn_d', def:0 }, { label:'S', key:'2fn_s', def:0 }] },
   ],
   'Stello': [
-    { floor: '1F', fields: [{ label:'J', key:'1f_j', def:1 }] },
-    { floor: '2F', fields: [{ label:'QD', key:'2f_qd', def:0 }, { label:'BigJ', key:'2f_bj', def:0 }, { label:'SmallJ', key:'2f_sj', def:0 }, { label:'Study', key:'2f_st', def:0 }, { label:'Add', key:'2f_add', def:0 }] },
+    { floor: '1F', fields: [{ label:'J', key:'1f_j', def:3 }] },
+    { floor: '2F', fields: [{ label:'QD', key:'2f_qd', def:1 }, { label:'BigJ', key:'2f_bj', def:0 }, { label:'SmallJ', key:'2f_sj', def:0 }, { label:'Study', key:'2f_st', def:0 }, { label:'Add', key:'2f_add', def:0 }] },
   ],
   'Morlla': [
-    { floor: '1F', fields: [{ label:'J', key:'1f_j', def:1 }] },
-    { floor: '2F', fields: [{ label:'QD', key:'2f_qd', def:0 }, { label:'BigJ', key:'2f_bj', def:0 }, { label:'SmallJ', key:'2f_sj', def:0 }, { label:'Study', key:'2f_st', def:0 }, { label:'Add', key:'2f_add', def:0 }] },
+    { floor: '1F', fields: [{ label:'J', key:'1f_j', def:3 }] },
+    { floor: '2F', fields: [{ label:'QD', key:'2f_qd', def:1 }, { label:'BigJ', key:'2f_bj', def:0 }, { label:'SmallJ', key:'2f_sj', def:0 }, { label:'Study', key:'2f_st', def:0 }, { label:'Add', key:'2f_add', def:0 }] },
   ],
   'Nevia': [
-    { floor: '1F', fields: [{ label:'J', key:'1f_j', def:1 }] },
-    { floor: '2F', fields: [{ label:'QD', key:'2f_qd', def:0 }, { label:'BigJ', key:'2f_bj', def:0 }, { label:'SmallJ', key:'2f_sj', def:0 }, { label:'Study', key:'2f_st', def:0 }, { label:'Add', key:'2f_add', def:0 }] },
+    { floor: '1F', fields: [{ label:'J', key:'1f_j', def:3 }] },
+    { floor: '2F', fields: [{ label:'QD', key:'2f_qd', def:1 }, { label:'BigJ', key:'2f_bj', def:0 }, { label:'SmallJ', key:'2f_sj', def:0 }, { label:'Study', key:'2f_st', def:0 }, { label:'Add', key:'2f_add', def:0 }] },
   ],
   'Vista': [
-    { floor: '1F', fields: [{ label:'J', key:'1f_j', def:1 }] },
-    { floor: '2F', fields: [{ label:'QD', key:'2f_qd', def:0 }, { label:'BigJ', key:'2f_bj', def:0 }, { label:'SmallJ', key:'2f_sj', def:0 }, { label:'Study', key:'2f_st', def:0 }, { label:'Add', key:'2f_add', def:0 }] },
+    { floor: '1F', fields: [{ label:'J', key:'1f_j', def:3 }] },
+    { floor: '2F', fields: [{ label:'QD', key:'2f_qd', def:1 }, { label:'BigJ', key:'2f_bj', def:0 }, { label:'SmallJ', key:'2f_sj', def:0 }, { label:'Study', key:'2f_st', def:0 }, { label:'Add', key:'2f_add', def:0 }] },
   ],
-  'MOKA':  [{ floor: '', fields: [{ label:'SD', key:'sd', def:0 }, { label:'Add', key:'add', def:0 }] }],
-  'KOKO':  [{ floor: '', fields: [{ label:'SD', key:'sd', def:0 }, { label:'Add', key:'add', def:0 }] }],
+  'MOKA':  [{ floor: '', fields: [{ label:'SD', key:'sd', def:2 }, { label:'Add', key:'add', def:0 }] }],
+  'KOKO':  [{ floor: '', fields: [{ label:'SD', key:'sd', def:2 }, { label:'Add', key:'add', def:0 }] }],
   'MARU':  [{ floor: '', fields: [{ label:'S', key:'s', def:0 }, { label:'Add', key:'add', def:0 }] }],
-  'RUNA':  [{ floor: '', fields: [{ label:'S', key:'s', def:0 }, { label:'Add', key:'add', def:0 }] }],
-  'MEI':   [{ floor: '', fields: [{ label:'S', key:'s', def:0 }, { label:'Add', key:'add', def:0 }] }],
-  'NOA':   [{ floor: '', fields: [{ label:'S', key:'s', def:0 }, { label:'Add', key:'add', def:0 }] }],
+  'RUNA':  [{ floor: '', fields: [{ label:'S', key:'s', def:2 }, { label:'Add', key:'add', def:0 }] }],
+  'MEI':   [{ floor: '', fields: [{ label:'S', key:'s', def:2 }, { label:'Add', key:'add', def:0 }] }],
+  'NOA':   [{ floor: '', fields: [{ label:'S', key:'s', def:2 }, { label:'Add', key:'add', def:0 }] }],
   'RIN':   [{ floor: '', fields: [{ label:'S', key:'s', def:0 }, { label:'Loft', key:'loft', def:0 }] }],
-  'LEO':   [{ floor: '', fields: [{ label:'S', key:'s', def:0 }, { label:'Loft', key:'loft', def:0 }] }],
+  'LEO':   [{ floor: '', fields: [{ label:'S', key:'s', def:2 }, { label:'Loft', key:'loft', def:0 }] }],
   'MOMO':  [{ floor: '', fields: [{ label:'S', key:'s', def:0 }, { label:'Loft', key:'loft', def:0 }] }],
 }
 
