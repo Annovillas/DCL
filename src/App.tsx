@@ -25,9 +25,10 @@ const LANGS = {
     cts: "CTS",
     need: "NEED",
     tags: { bbq: "BBQ", bonfire: "Bonfire", pet: "Pet", deco: "Deco", meal: "Meal", beding: "Bedding" },
-    cleanTypes: { LAST_CHECK: "Checkout Clean", NEXT_DAY: "Prepare for Guest", FIRST_CHECK: "Morning Check" },
+    cleanTypes: { LAST_CHECK: "Last Check", NEXT_DAY: "Prepare for Guest", FIRST_CHECK: "First Check" },
     total: "Total",
     rooms: "Rooms",
+    totalPax: "Total PAX",
   },
   zh: {
     title: "DCL 每日報告",
@@ -45,14 +46,15 @@ const LANGS = {
     channel: "渠道",
     phone: "電話",
     lastCheck: "最後檢查",
-    firstCheck: "早上檢查",
-    nextDay: "明日計劃",
+    firstCheck: "First Check",
+    nextDay: "明日準備",
     cts: "CTS",
     need: "需要",
     tags: { bbq: "BBQ", bonfire: "篝火", pet: "寵物", deco: "裝飾", meal: "餐飲", beding: "床鋪" },
-    cleanTypes: { LAST_CHECK: "退房清潔", NEXT_DAY: "明日準備", FIRST_CHECK: "早上檢查" },
+    cleanTypes: { LAST_CHECK: "Last Check", NEXT_DAY: "明日準備", FIRST_CHECK: "First Check" },
     total: "共",
     rooms: "間",
+    totalPax: "總人數",
   },
   ja: {
     title: "DCL 日次レポート",
@@ -69,15 +71,16 @@ const LANGS = {
     co: "CO",
     channel: "チャネル",
     phone: "電話",
-    lastCheck: "最終チェック",
-    firstCheck: "朝のチェック",
-    nextDay: "翌日プラン",
+    lastCheck: "Last Check",
+    firstCheck: "First Check",
+    nextDay: "翌日準備",
     cts: "CTS",
     need: "要対応",
     tags: { bbq: "BBQ", bonfire: "焚き火", pet: "ペット", deco: "デコ", meal: "食事", beding: "ベッド" },
-    cleanTypes: { LAST_CHECK: "チェックアウト清掃", NEXT_DAY: "翌日準備", FIRST_CHECK: "朝のチェック" },
+    cleanTypes: { LAST_CHECK: "Last Check", NEXT_DAY: "翌日準備", FIRST_CHECK: "First Check" },
     total: "合計",
     rooms: "室",
+    totalPax: "総人数",
   }
 }
 
@@ -120,7 +123,9 @@ export default function DCLApp() {
     const groups: Record<string, any[]> = { LAST_CHECK: [], NEXT_DAY: [], FIRST_CHECK: [] }
     data.villas.forEach((v: any) => groups[v.cleanType]?.push(v))
 
-    Object.entries(groups).forEach(([type, villas]) => {
+    const ORDER = ["FIRST_CHECK","LAST_CHECK","NEXT_DAY"]
+    ORDER.forEach(type => {
+      const villas = groups[type] || []
       if (!villas.length) return
       lines.push(`【${t.cleanTypes[type as keyof typeof t.cleanTypes]}】`)
       villas.forEach(v => {
@@ -134,6 +139,7 @@ export default function DCLApp() {
       })
       lines.push("")
     })
+    // dummy to close
     return lines.join("\n")
   }
 
@@ -183,8 +189,8 @@ export default function DCLApp() {
 
       {/* Stats */}
       {data && (
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:1, background:"#1e1e2e", margin:"0 0 1px 0" }}>
-          {(["LAST_CHECK","NEXT_DAY","FIRST_CHECK"] as const).map(type => {
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:1, background:"#1e1e2e", margin:"0 0 1px 0" }}>
+          {(["FIRST_CHECK","LAST_CHECK","NEXT_DAY"] as const).map(type => {
             const count = data.villas.filter((v:any) => v.cleanType === type).length
             const c = CLEAN_COLORS[type]
             return (
@@ -194,6 +200,12 @@ export default function DCLApp() {
               </div>
             )
           })}
+          <div style={{ padding:"12px 16px", background:"#0f1117", textAlign:"center" }}>
+            <div style={{ fontSize:22, fontWeight:600, color:"#c9a96e" }}>
+              {data.villas.filter((v:any) => v.cleanType === "NEXT_DAY").reduce((s:number,v:any) => s + (v.pax||0), 0)}
+            </div>
+            <div style={{ fontSize:10, color:"#666", marginTop:2 }}>{t.totalPax}</div>
+          </div>
         </div>
       )}
 
@@ -205,7 +217,7 @@ export default function DCLApp() {
           <div style={{ padding:32, textAlign:"center", color:"#555" }}>{t.noData}</div>
         )}
 
-        {data && (["LAST_CHECK","NEXT_DAY","FIRST_CHECK"] as const).map(type => {
+        {data && (["FIRST_CHECK","LAST_CHECK","NEXT_DAY"] as const).map(type => {
           const villas = data.villas.filter((v:any) => v.cleanType === type)
           if (!villas.length) return null
           const c = CLEAN_COLORS[type]
