@@ -58,11 +58,11 @@ const VILLA_BED_CONFIG: Record<string, { floor: string, fields: { label: string,
   ],
   'MOKA':  [{ floor: '', fields: [{ label:'SD', key:'sd', def:2 }, { label:'Add', key:'add', def:0 }] }],
   'KOKO':  [{ floor: '', fields: [{ label:'SD', key:'sd', def:2 }, { label:'Add', key:'add', def:0 }] }],
-  'MARU':  [{ floor: '', fields: [{ label:'S', key:'s', def:0 }, { label:'Add', key:'add', def:0 }] }],
+  'MARU':  [{ floor: '', fields: [{ label:'S', key:'s', def:2 }, { label:'Add', key:'add', def:0 }] }],
   'RUNA':  [{ floor: '', fields: [{ label:'S', key:'s', def:2 }, { label:'Add', key:'add', def:0 }] }],
   'MEI':   [{ floor: '', fields: [{ label:'S', key:'s', def:2 }, { label:'Add', key:'add', def:0 }] }],
   'NOA':   [{ floor: '', fields: [{ label:'S', key:'s', def:2 }, { label:'Add', key:'add', def:0 }] }],
-  'RIN':   [{ floor: '', fields: [{ label:'S', key:'s', def:0 }, { label:'Loft', key:'loft', def:0 }] }],
+  'RIN':   [{ floor: '', fields: [{ label:'S', key:'s', def:2 }, { label:'Loft', key:'loft', def:0 }] }],
   'LEO':   [{ floor: '', fields: [{ label:'S', key:'s', def:2 }, { label:'Loft', key:'loft', def:0 }] }],
   'MOMO':  [{ floor: '', fields: [{ label:'S', key:'s', def:0 }, { label:'Loft', key:'loft', def:0 }] }],
 }
@@ -121,7 +121,33 @@ export default function App() {
   const [copied, setCopied] = useState(false)
   const t = LANGS[lang]
 
+  // Save to localStorage when entering result step
+  const saveToStorage = (d: string, b: any, att: string, dat: any) => {
+    try {
+      localStorage.setItem(`dcl_${d}`, JSON.stringify({ beds: b, attention: att, data: dat, savedAt: Date.now() }))
+    } catch(e) {}
+  }
+
+  // Load from localStorage on date change
+  const loadFromStorage = (d: string) => {
+    try {
+      const saved = localStorage.getItem(`dcl_${d}`)
+      if (saved) return JSON.parse(saved)
+    } catch(e) {}
+    return null
+  }
+
   const loadData = async () => {
+    // Check localStorage first
+    const saved = loadFromStorage(date)
+    if (saved) {
+      setData(saved.data)
+      setBeds(saved.beds)
+      setAttention(saved.attention)
+      setStep('result')
+      setLoading(false)
+      return
+    }
     setLoading(true); setError('')
     try {
       const res = await fetch(`${GAS_URL}?secret=${SECRET}&date=${date}`)
@@ -274,7 +300,7 @@ export default function App() {
 
             <div style={{ display:'flex', gap:8 }}>
               <button onClick={()=>setStep('select')} style={{ ...btn('#1e1e2e','#888'), flex:1 }}>{t.back}</button>
-              <button onClick={()=>setStep('result')} style={{ ...btn(), flex:2 }}>{t.next}</button>
+              <button onClick={()=>{ saveToStorage(date, beds, attention, data); setStep('result') }} style={{ ...btn(), flex:2 }}>{t.next}</button>
             </div>
           </div>
         )}
@@ -284,7 +310,10 @@ export default function App() {
           <div>
             <div style={{ ...card, background:'#0a0a14' }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                 <span style={{ fontSize:11, color:'#444', fontFamily:"'DM Mono',monospace" }}>DCL · {date}</span>
+                {loadFromStorage(date) && <span style={{ fontSize:9, color:'#4ecb7a', background:'#0a1f12', padding:'1px 6px', borderRadius:4, border:'1px solid #2e7d32' }}>💾 saved</span>}
+              </div>
                 <button onClick={copy} style={{ ...btn(copied?'#2e7d32':'#c9a96e'), padding:'6px 18px', fontSize:12 }}>
                   {copied ? t.copied : t.copy}
                 </button>
@@ -298,6 +327,7 @@ export default function App() {
             </div>
             <div style={{ display:'flex', gap:8 }}>
               <button onClick={()=>setStep('confirm')} style={{ ...btn('#1e1e2e','#888'), flex:1 }}>{t.back}</button>
+              <button onClick={()=>{ try { localStorage.removeItem(`dcl_${date}`) } catch(e) {}; setStep('confirm') }} style={{ ...btn('#1a1a2e','#f57f17'), flex:1 }}>🔄 Reload</button>
               <button onClick={()=>{ setStep('select'); setData(null) }} style={{ ...btn('#1a1a2e','#666'), flex:1 }}>New Date</button>
             </div>
           </div>
