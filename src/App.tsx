@@ -233,7 +233,7 @@ export default function App() {
                     <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:6 }}>
                       <span style={{ fontSize:13, fontWeight:600, color: v.lastCheck==='NEED'?'#4ecb7a':'#c9a96e' }}>{v.villa}</span>
                       {v.lastCheck==='NEED' && <span style={{ fontSize:9, background:'#0a1f12', color:'#4ecb7a', padding:'1px 6px', borderRadius:4, border:'1px solid #2e7d32' }}>PR</span>}
-                      <span style={{ fontSize:11, color:'#555', marginLeft:'auto' }}>{v.pax} pax</span>
+                      <span style={{ fontSize:16, fontWeight:700, color:'#e8e0d0', marginLeft:'auto' }}>{v.pax} <span style={{fontSize:11, color:'#888'}}>pax</span></span>
                     </div>
                     {cfg ? cfg.map(floor => (
                       <div key={floor.floor} style={{ display:'flex', alignItems:'center', flexWrap:'wrap', gap:6, marginBottom:4 }}>
@@ -248,6 +248,18 @@ export default function App() {
                         ))}
                       </div>
                     )) : null}
+                    {(() => {
+                      const total = cfg ? cfg.reduce((s, fl) => s + fl.fields.reduce((ss, f) => ss + (beds[v.villa]?.[f.key] ?? f.def), 0), 0) : 0
+                      const match = total === v.pax
+                      return (
+                        <div style={{ display:'flex', alignItems:'center', gap:8, marginTop:6, padding:'4px 10px', borderRadius:6, background: match ? '#0a1f12' : '#1f0a0a', border: `1px solid ${match?'#2e7d32':'#7f1d1d'}` }}>
+                          <span style={{ fontSize:12, fontFamily:"'DM Mono',monospace", color:'#888' }}>Σ {total}</span>
+                          <span style={{ fontSize:12, color: match?'#4ecb7a':'#f87171', fontWeight:600 }}>
+                            {match ? '✅ Ready' : `⚠️ ${total} / ${v.pax}`}
+                          </span>
+                        </div>
+                      )
+                    })()}
                   </div>
                 )
               })}
