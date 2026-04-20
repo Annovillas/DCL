@@ -1,270 +1,256 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 
 const GAS_URL = "https://script.google.com/macros/s/AKfycby5A9_XZi-sfT9aQc8IhCt86ToJqy3yBoyY399DhkHuaetu4iKZ7-v-_tCO-v78Zu8OTA/exec"
 const SECRET = "anno2024admin"
 
-const LANGS = {
-  en: {
-    title: "DCL Daily Report",
-    subtitle: "Cleaning & Check Schedule",
-    date: "Date",
-    load: "Load",
-    loading: "Loading...",
-    copy: "Copy Report",
-    copied: "Copied!",
-    noData: "No tasks found for this date.",
-    error: "Error loading data.",
-    pax: "PAX",
-    ci: "CI",
-    co: "CO",
-    channel: "Channel",
-    phone: "Phone",
-    lastCheck: "Last Check",
-    firstCheck: "First Check",
-    nextDay: "Next Day Plan",
-    cts: "CTS",
-    need: "NEED",
-    tags: { bbq: "BBQ", bonfire: "Bonfire", pet: "Pet", deco: "Deco", meal: "Meal", beding: "Bedding" },
-    cleanTypes: { LAST_CHECK: "Last Check", NEXT_DAY: "Prepare for Guest", FIRST_CHECK: "First Check" },
-    total: "Total",
-    rooms: "Rooms",
-    totalPax: "Total PAX",
-  },
-  zh: {
-    title: "DCL 每日報告",
-    subtitle: "清潔與入住清單",
-    date: "日期",
-    load: "讀取",
-    loading: "讀取中...",
-    copy: "複製報告",
-    copied: "已複製！",
-    noData: "當天沒有任務。",
-    error: "讀取失敗。",
-    pax: "人數",
-    ci: "入住",
-    co: "退房",
-    channel: "渠道",
-    phone: "電話",
-    lastCheck: "最後檢查",
-    firstCheck: "First Check",
-    nextDay: "明日準備",
-    cts: "CTS",
-    need: "需要",
-    tags: { bbq: "BBQ", bonfire: "篝火", pet: "寵物", deco: "裝飾", meal: "餐飲", beding: "床鋪" },
-    cleanTypes: { LAST_CHECK: "Last Check", NEXT_DAY: "明日準備", FIRST_CHECK: "First Check" },
-    total: "共",
-    rooms: "間",
-    totalPax: "總人數",
-  },
-  ja: {
-    title: "DCL 日次レポート",
-    subtitle: "清掃・チェックスケジュール",
-    date: "日付",
-    load: "読込",
-    loading: "読込中...",
-    copy: "レポートをコピー",
-    copied: "コピー完了！",
-    noData: "この日のタスクはありません。",
-    error: "データの読み込みに失敗しました。",
-    pax: "人数",
-    ci: "CI",
-    co: "CO",
-    channel: "チャネル",
-    phone: "電話",
-    lastCheck: "Last Check",
-    firstCheck: "First Check",
-    nextDay: "翌日準備",
-    cts: "CTS",
-    need: "要対応",
-    tags: { bbq: "BBQ", bonfire: "焚き火", pet: "ペット", deco: "デコ", meal: "食事", beding: "ベッド" },
-    cleanTypes: { LAST_CHECK: "Last Check", NEXT_DAY: "翌日準備", FIRST_CHECK: "First Check" },
-    total: "合計",
-    rooms: "室",
-    totalPax: "総人数",
-  }
+const VILLA_ORDER = [
+  'Grand V', 'Panorama V', 'Villa A', 'Villa B', 'Villa C',
+  'CUBE', 'Gekkouen', 'Stello', 'Morlla', 'Nevia', 'Vista',
+  'MOKA', 'KOKO', 'MARU', 'RUNA', 'MEI', 'NOA', 'RIN', 'LEO', 'MOMO'
+]
+
+const DEFAULT_BEDS: Record<string, string> = {
+  'Grand V':    '',
+  'Panorama V': '',
+  'Villa A':    '',
+  'Villa B':    '',
+  'Villa C':    '',
+  'CUBE':       '',
+  'Gekkouen':   '',
+  'Stello':     '',
+  'Morlla':     '',
+  'Nevia':      '',
+  'Vista':      '',
+  'MOKA':       '',
+  'KOKO':       '',
+  'MARU':       '',
+  'RUNA':       '',
+  'MEI':        '',
+  'NOA':        '',
+  'RIN':        '',
+  'LEO':        '',
+  'MOMO':       '',
 }
 
-const CLEAN_COLORS = {
-  LAST_CHECK: { bg: "#e8f5e9", border: "#2e7d32", badge: "#2e7d32", label: "#1b5e20" },
-  NEXT_DAY:   { bg: "#e0f7fa", border: "#00838f", badge: "#00838f", label: "#004d56" },
-  FIRST_CHECK:{ bg: "#fffde7", border: "#f9a825", badge: "#f57f17", label: "#e65100" },
+const DEFAULT_ATTENTION = `‼️Attention Each villa‼️
+*Spider & Beehives クモの巣 & ハチの巣
+*Visible cigarette butts & Weeds 目立つ吸い殻 & 雑草`
+
+const LANGS: any = {
+  en: { title: "DCL Daily Report", load: "Load", loading: "Loading...", step1: "Select Date", step2: "Confirm & Edit", step3: "Copy Report", next: "Next →", back: "← Back", copy: "Copy", copied: "Copied!", firstCheck: "First Check", lastCheck: "Last Check", totalPax: "Total PAX", bedNote: "Bedmaking Memo", attention: "Attention Note", noData: "No tasks for this date.", pr: "PR = Priority = Checkout cleaning required" },
+  zh: { title: "DCL 每日報告", load: "讀取", loading: "讀取中...", step1: "選擇日期", step2: "確認編輯", step3: "複製報告", next: "下一步 →", back: "← 返回", copy: "複製", copied: "已複製！", firstCheck: "First Check", lastCheck: "Last Check", totalPax: "總人數", bedNote: "床型備註", attention: "注意事項", noData: "當天沒有任務。", pr: "PR = 優先 = 需要退房清潔" },
+  ja: { title: "DCL 日次レポート", load: "読込", loading: "読込中...", step1: "日付選択", step2: "確認・編集", step3: "レポートコピー", next: "次へ →", back: "← 戻る", copy: "コピー", copied: "コピー完了", firstCheck: "First Check", lastCheck: "Last Check", totalPax: "総人数", bedNote: "ベッドメモ", attention: "注意事項", noData: "タスクなし", pr: "PR = 優先 = チェックアウト清掃要" },
 }
 
-export default function DCLApp() {
-  const today = new Date().toISOString().split("T")[0]
+type Step = 'select' | 'confirm' | 'result'
+
+export default function App() {
+  const today = new Date().toISOString().split('T')[0]
+  const [lang, setLang] = useState<'en'|'zh'|'ja'>('en')
   const [date, setDate] = useState(today)
-  const [lang, setLang] = useState<"en"|"zh"|"ja">("en")
+  const [step, setStep] = useState<Step>('select')
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+  const [error, setError] = useState('')
+  const [beds, setBeds] = useState<Record<string,string>>({...DEFAULT_BEDS})
+  const [attention, setAttention] = useState(DEFAULT_ATTENTION)
   const [copied, setCopied] = useState(false)
 
   const t = LANGS[lang]
 
   const loadData = async () => {
     setLoading(true)
-    setError("")
-    setData(null)
+    setError('')
     try {
-      const url = `${GAS_URL}?secret=${SECRET}&date=${date}`
-      const res = await fetch(url)
+      const res = await fetch(`${GAS_URL}?secret=${SECRET}&date=${date}`)
       const json = await res.json()
       if (json.error) throw new Error(json.error)
       setData(json)
-    } catch (e: any) {
-      setError(t.error)
+      setStep('confirm')
+    } catch(e: any) {
+      setError(e.message)
     }
     setLoading(false)
   }
 
-  const generateReport = () => {
-    if (!data) return ""
-    const lines: string[] = [`📋 DCL ${date}`, ""]
-    const groups: Record<string, any[]> = { LAST_CHECK: [], NEXT_DAY: [], FIRST_CHECK: [] }
-    data.villas.forEach((v: any) => groups[v.cleanType]?.push(v))
-
-    const ORDER = ["FIRST_CHECK","LAST_CHECK","NEXT_DAY"]
-    ORDER.forEach(type => {
-      const villas = groups[type] || []
-      if (!villas.length) return
-      lines.push(`【${t.cleanTypes[type as keyof typeof t.cleanTypes]}】`)
-      villas.forEach(v => {
-        let line = `${v.villa}`
-        if (v.name) line += ` · ${v.name}`
-        if (v.pax) line += ` · ${v.pax}${t.pax}`
-        if (v.ciTime) line += ` · CI ${v.ciTime}`
-        const extras = ["bbq","bonfire","pet","deco","meal","beding"].filter(k => v[k])
-        if (extras.length) line += ` · ${extras.map(k => t.tags[k as keyof typeof t.tags]).join(" ")}`
-        lines.push(line)
-      })
-      lines.push("")
+  // Sort villas by VILLA_ORDER
+  const getSortedVillas = (type: string) => {
+    if (!data) return []
+    const villas = data.villas.filter((v: any) => v.cleanType === type)
+    return villas.sort((a: any, b: any) => {
+      const ai = VILLA_ORDER.indexOf(a.villa)
+      const bi = VILLA_ORDER.indexOf(b.villa)
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
     })
-    // dummy to close
-    return lines.join("\n")
   }
 
-  const copyReport = async () => {
-    await navigator.clipboard.writeText(generateReport())
+  const firstCheckVillas = getSortedVillas('FIRST_CHECK')
+  const lastCheckVillas = getSortedVillas('LAST_CHECK')
+  const totalPax = data?.villas.filter((v:any) => v.cleanType === 'NEXT_DAY').reduce((s:number, v:any) => s + (v.pax||0), 0) || 0
+
+  const generateText = () => {
+    const d = date.replace(/-/g, '')
+    const lines: string[] = [
+      d,
+      'DCL = Daily Cleaning List',
+      '（PR＝Priority＝優先）',
+      '',
+    ]
+
+    // All villas that need cleaning (LAST_CHECK or NEXT_DAY with pax > 0), sorted by VILLA_ORDER
+    const cleanVillas = data?.villas
+      .filter((v: any) => v.pax > 0)
+      .sort((a: any, b: any) => {
+        const ai = VILLA_ORDER.indexOf(a.villa)
+        const bi = VILLA_ORDER.indexOf(b.villa)
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
+      }) || []
+
+    cleanVillas.forEach((v: any) => {
+      const bed = beds[v.villa]
+      let line = `${v.villa} ${v.pax}`
+      if (bed) line += ` (${bed})`
+      if (v.lastCheck === 'NEED') line += ' PR'
+      lines.push(line)
+    })
+
+    lines.push('')
+    lines.push(attention)
+    return lines.join('\n')
+  }
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(generateText())
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const tags = (v: any) => ["bbq","bonfire","pet","deco","meal","beding"].filter(k => v[k])
+  const s = { background: '#0f1117', minHeight: '100vh', fontFamily: "'DM Sans', sans-serif", color: '#e8e0d0' }
+  const card = { background: '#141420', border: '1px solid #2a2a3a', borderRadius: 10, padding: '14px 16px', marginBottom: 10 }
+  const input = { width: '100%', background: '#1a1a2e', border: '1px solid #2a2a3a', borderRadius: 8, color: '#e8e0d0', padding: '8px 12px', fontSize: 13, fontFamily: 'inherit', boxSizing: 'border-box' as const }
+  const btn = (color = '#c9a96e', textColor = '#0f1117') => ({ padding: '10px 20px', borderRadius: 8, border: 'none', background: color, color: textColor, fontWeight: 600, fontSize: 14, cursor: 'pointer' })
 
   return (
-    <div style={{ minHeight:"100vh", background:"#0f1117", fontFamily:"'DM Sans', sans-serif", color:"#e8e0d0" }}>
+    <div style={s}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 
       {/* Header */}
-      <div style={{ borderBottom:"1px solid #2a2a3a", padding:"16px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", position:"sticky", top:0, background:"#0f1117", zIndex:10 }}>
-        <div>
-          <div style={{ fontSize:18, fontWeight:600, letterSpacing:"0.02em", color:"#c9a96e" }}>{t.title}</div>
-          <div style={{ fontSize:11, color:"#666", marginTop:1 }}>{t.subtitle}</div>
-        </div>
-        <div style={{ display:"flex", gap:6 }}>
-          {(["en","zh","ja"] as const).map(l => (
-            <button key={l} onClick={() => setLang(l)} style={{
-              padding:"4px 10px", borderRadius:6, border:"none", cursor:"pointer", fontSize:12, fontWeight:500,
-              background: lang===l ? "#c9a96e" : "#1e1e2e", color: lang===l ? "#0f1117" : "#888"
-            }}>{l.toUpperCase()}</button>
+      <div style={{ borderBottom: '1px solid #2a2a3a', padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, background: '#0f1117', zIndex: 10 }}>
+        <div style={{ fontSize: 16, fontWeight: 600, color: '#c9a96e' }}>{t.title}</div>
+        <div style={{ display: 'flex', gap: 5 }}>
+          {(['en','zh','ja'] as const).map(l => (
+            <button key={l} onClick={() => setLang(l)} style={{ ...btn(lang===l ? '#c9a96e' : '#1e1e2e', lang===l ? '#0f1117' : '#888'), padding: '4px 10px', fontSize: 11 }}>{l.toUpperCase()}</button>
           ))}
         </div>
       </div>
 
-      {/* Controls */}
-      <div style={{ padding:"16px 20px", display:"flex", gap:10, alignItems:"center", borderBottom:"1px solid #1e1e2e" }}>
-        <input type="date" value={date} onChange={e => setDate(e.target.value)}
-          style={{ flex:1, padding:"10px 14px", borderRadius:8, border:"1px solid #2a2a3a", background:"#1a1a2e", color:"#e8e0d0", fontSize:14, fontFamily:"'DM Mono', monospace" }}/>
-        <button onClick={loadData} disabled={loading} style={{
-          padding:"10px 20px", borderRadius:8, border:"none", background:"#c9a96e", color:"#0f1117",
-          fontWeight:600, fontSize:14, cursor:"pointer", whiteSpace:"nowrap"
-        }}>{loading ? t.loading : t.load}</button>
-        {data && (
-          <button onClick={copyReport} style={{
-            padding:"10px 16px", borderRadius:8, border:"1px solid #c9a96e", background:"transparent",
-            color:"#c9a96e", fontWeight:500, fontSize:13, cursor:"pointer", whiteSpace:"nowrap"
-          }}>{copied ? t.copied : t.copy}</button>
-        )}
+      {/* Steps indicator */}
+      <div style={{ display: 'flex', padding: '10px 16px', gap: 8, borderBottom: '1px solid #1e1e2e' }}>
+        {[['select', t.step1], ['confirm', t.step2], ['result', t.step3]].map(([s_, label]) => (
+          <div key={s_} style={{ flex: 1, textAlign: 'center', fontSize: 11, padding: '4px 8px', borderRadius: 6, background: step === s_ ? '#c9a96e22' : 'transparent', color: step === s_ ? '#c9a96e' : '#444', borderBottom: step === s_ ? '2px solid #c9a96e' : '2px solid transparent' }}>{label as string}</div>
+        ))}
       </div>
 
-      {/* Stats */}
-      {data && (
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:1, background:"#1e1e2e", margin:"0 0 1px 0" }}>
-          {(["FIRST_CHECK","LAST_CHECK","NEXT_DAY"] as const).map(type => {
-            const count = data.villas.filter((v:any) => v.cleanType === type).length
-            const c = CLEAN_COLORS[type]
-            return (
-              <div key={type} style={{ padding:"12px 16px", background:"#0f1117", textAlign:"center" }}>
-                <div style={{ fontSize:22, fontWeight:600, color:c.badge }}>{count}</div>
-                <div style={{ fontSize:10, color:"#666", marginTop:2 }}>{t.cleanTypes[type]}</div>
-              </div>
-            )
-          })}
-          <div style={{ padding:"12px 16px", background:"#0f1117", textAlign:"center" }}>
-            <div style={{ fontSize:22, fontWeight:600, color:"#c9a96e" }}>
-              {data.villas.filter((v:any) => v.cleanType === "NEXT_DAY").reduce((s:number,v:any) => s + (v.pax||0), 0)}
+      <div style={{ padding: '14px 16px' }}>
+
+        {/* STEP 1: Select Date */}
+        {step === 'select' && (
+          <div>
+            <div style={card}>
+              <div style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>{t.step1}</div>
+              <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ ...input, fontSize: 16, padding: '12px', marginBottom: 12 }}/>
+              {error && <div style={{ color: '#f87171', fontSize: 12, marginBottom: 8 }}>{error}</div>}
+              <button onClick={loadData} disabled={loading} style={{ ...btn(), width: '100%', fontSize: 15 }}>
+                {loading ? t.loading : t.load}
+              </button>
             </div>
-            <div style={{ fontSize:10, color:"#666", marginTop:2 }}>{t.totalPax}</div>
           </div>
-        </div>
-      )}
-
-      {/* Content */}
-      <div style={{ padding:"12px 16px" }}>
-        {error && <div style={{ padding:16, background:"#1a0a0a", border:"1px solid #7f1d1d", borderRadius:8, color:"#f87171", fontSize:13 }}>{error}</div>}
-
-        {data && data.villas.length === 0 && (
-          <div style={{ padding:32, textAlign:"center", color:"#555" }}>{t.noData}</div>
         )}
 
-        {data && (["FIRST_CHECK","LAST_CHECK","NEXT_DAY"] as const).map(type => {
-          const villas = data.villas.filter((v:any) => v.cleanType === type)
-          if (!villas.length) return null
-          const c = CLEAN_COLORS[type]
-          return (
-            <div key={type} style={{ marginBottom:20 }}>
-              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
-                <div style={{ width:3, height:16, borderRadius:2, background:c.badge }}/>
-                <span style={{ fontSize:12, fontWeight:600, color:c.badge, letterSpacing:"0.08em", textTransform:"uppercase" }}>
-                  {t.cleanTypes[type]}
-                </span>
-                <span style={{ fontSize:11, color:"#555", marginLeft:4 }}>{villas.length}</span>
-              </div>
-              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                {villas.map((v: any, i: number) => (
-                  <div key={i} style={{ background:"#141420", border:`1px solid #2a2a3a`, borderLeft:`3px solid ${c.border}`, borderRadius:8, padding:"12px 14px" }}>
-                    <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:6 }}>
-                      <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
-                        <span style={{ fontSize:16, fontWeight:600, color:"#c9a96e" }}>{v.villa}</span>
-                        {v.cts && <span style={{ fontSize:10, padding:"2px 7px", borderRadius:4, background:c.badge+"22", color:c.badge, fontWeight:600, fontFamily:"'DM Mono', monospace" }}>{v.cts}</span>}
-                        {v.channel && <span style={{ fontSize:10, color:"#666", padding:"2px 7px", background:"#1e1e2e", borderRadius:4 }}>{v.channel}</span>}
-                      </div>
-                      {v.pax > 0 && <span style={{ fontSize:13, color:"#888", fontFamily:"'DM Mono', monospace" }}>{v.pax} {t.pax}</span>}
+        {/* STEP 2: Confirm */}
+        {step === 'confirm' && data && (
+          <div>
+            {/* Stats */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginBottom: 14 }}>
+              {[
+                { label: t.firstCheck, value: firstCheckVillas.length, color: '#f57f17' },
+                { label: t.lastCheck, value: lastCheckVillas.length, color: '#2e7d32' },
+                { label: t.totalPax, value: totalPax, color: '#c9a96e' },
+              ].map(stat => (
+                <div key={stat.label} style={{ ...card, textAlign: 'center', marginBottom: 0 }}>
+                  <div style={{ fontSize: 24, fontWeight: 700, color: stat.color }}>{stat.value}</div>
+                  <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>{stat.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Bedmaking memos */}
+            <div style={card}>
+              <div style={{ fontSize: 12, color: '#888', marginBottom: 10, fontWeight: 600 }}>{t.bedNote}</div>
+              {data.villas
+                .filter((v: any) => v.pax > 0)
+                .sort((a: any, b: any) => (VILLA_ORDER.indexOf(a.villa)||99) - (VILLA_ORDER.indexOf(b.villa)||99))
+                .map((v: any) => (
+                  <div key={v.villa} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <div style={{ width: 80, fontSize: 12, color: v.lastCheck === 'NEED' ? '#4ecb7a' : '#c9a96e', fontWeight: 600, flexShrink: 0 }}>
+                      {v.villa}
+                      {v.lastCheck === 'NEED' && <span style={{ fontSize: 9, color: '#4ecb7a', marginLeft: 3 }}>PR</span>}
                     </div>
-
-                    {v.name && <div style={{ fontSize:13, color:"#b0a898", marginBottom:4 }}>{v.name}</div>}
-
-                    <div style={{ display:"flex", gap:12, flexWrap:"wrap", fontSize:12, color:"#666", marginBottom:6 }}>
-                      {v.ciTime && <span>↑ {v.ciTime}</span>}
-                      {v.coTime && <span>↓ {v.coTime}</span>}
-                      {v.phone && <span style={{ color:"#888" }}>📞 {v.phone}</span>}
-                    </div>
-
-                    {tags(v).length > 0 && (
-                      <div style={{ display:"flex", gap:4, flexWrap:"wrap", marginTop:4 }}>
-                        {tags(v).map(k => (
-                          <span key={k} style={{ fontSize:10, padding:"2px 8px", borderRadius:12, background:"#1e2535", color:"#7cb9e8", border:"1px solid #2a3a4a" }}>
-                            {t.tags[k as keyof typeof t.tags]}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    <div style={{ fontSize: 11, color: '#666', width: 24, textAlign: 'center' }}>{v.pax}</div>
+                    <input
+                      value={beds[v.villa] || ''}
+                      onChange={e => setBeds(prev => ({ ...prev, [v.villa]: e.target.value }))}
+                      placeholder="e.g. J2+D1+S2"
+                      style={{ ...input, flex: 1, fontSize: 12, padding: '6px 10px' }}
+                    />
                   </div>
                 ))}
-              </div>
             </div>
-          )
-        })}
+
+            {/* Attention */}
+            <div style={card}>
+              <div style={{ fontSize: 12, color: '#888', marginBottom: 8, fontWeight: 600 }}>{t.attention}</div>
+              <textarea
+                value={attention}
+                onChange={e => setAttention(e.target.value)}
+                rows={4}
+                style={{ ...input, resize: 'vertical' as const, lineHeight: 1.6 }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setStep('select')} style={{ ...btn('#1e1e2e', '#888'), flex: 1 }}>{t.back}</button>
+              <button onClick={() => setStep('result')} style={{ ...btn(), flex: 2 }}>{t.next}</button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 3: Result */}
+        {step === 'result' && (
+          <div>
+            <div style={{ ...card, background: '#0a0a14' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <div style={{ fontSize: 11, color: '#555', fontFamily: "'DM Mono', monospace" }}>DCL · {date}</div>
+                <button onClick={copy} style={{ ...btn(copied ? '#2e7d32' : '#c9a96e'), padding: '6px 16px', fontSize: 12 }}>
+                  {copied ? t.copied : t.copy}
+                </button>
+              </div>
+              <pre style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, lineHeight: 1.8, color: '#c8d4e8', whiteSpace: 'pre-wrap', margin: 0, background: '#0f1117', padding: 14, borderRadius: 8, border: '1px solid #1e1e2e' }}>
+                {generateText()}
+              </pre>
+            </div>
+
+            {/* PR legend */}
+            <div style={{ ...card, background: '#0a1f12', border: '1px solid #1b5e20' }}>
+              <div style={{ fontSize: 11, color: '#4ecb7a' }}>{t.pr}</div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setStep('confirm')} style={{ ...btn('#1e1e2e', '#888'), flex: 1 }}>{t.back}</button>
+              <button onClick={() => setStep('select')} style={{ ...btn('#1a1a2e', '#666'), flex: 1 }}>New Date</button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
